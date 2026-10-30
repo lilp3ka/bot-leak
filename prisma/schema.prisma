@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  telegramId String   @unique
+  createdAt  DateTime @default(now())
+  emails     Email[]
+}
+
+model Email {
+  id         Int                @id @default(autoincrement())
+  address    String
+  verifiedAt DateTime?
+  userId     Int
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codes      VerificationCode[]
+
+  @@unique([userId, address])
+}
+
+model VerificationCode {
+  id        Int      @id @default(autoincrement())
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  emailId   Int
+  email     Email    @relation(fields: [emailId], references: [id], onDelete: Cascade)
+
+  @@index([emailId])
+  createdAt DateTime @default(now())
+}
